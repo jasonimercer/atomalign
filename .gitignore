@@ -1,0 +1,13 @@
+*~
+*.bak
+*.swp
+*.swo
+bin/
+build/
+cmake_install.cmake
+CMakeLists.txt.user
+.cproject
+.project
+.pyc
+.pydevproject
+.pyo
