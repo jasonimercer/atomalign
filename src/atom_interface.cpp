@@ -27,30 +27,6 @@ uint32_t AtomInterface::hash()
   return COMPILE_TIME_CRC32_STR("Atom");
 }
 
-static void setpos(lua_State* L, int idx, std::vector<Atom::PosType>& vec)
-{
-  vec.resize(3);
-  for (size_t i = 0; i < 3; i++)
-  {
-    lua_pushinteger(L, i + 1);
-    lua_gettable(L, idx);
-    vec[i] = lua_tonumber(L, -1);
-    lua_pop(L, 1);
-  }
-}
-
-static int getpos(lua_State* L, std::vector<Atom::PosType>& vec)
-{
-  lua_newtable(L);
-  for (size_t i = 0; i < 3; i++)
-  {
-    lua_pushinteger(L, i + 1);
-    lua_pushnumber(L, vec[i]);
-    lua_settable(L, -3);
-  }
-  return 1;
-}
-
 static void kwargs(lua_State* L, int idx, Atom::Ptr p)
 {
   lua_getfield(L, idx, "name");
@@ -76,6 +52,11 @@ int AtomInterface::l_new(lua_State* L)
 {
   Atom::Ptr p(new Atom());
 
+  if (luaT_is<Atom>(L, 1))
+  {
+    p = luaT_to<Atom>(L, 1)->copy();
+  }
+
   if (lua_istable(L, 1))
   {
     kwargs(L, 1, p);
@@ -87,6 +68,12 @@ int AtomInterface::l_new(lua_State* L)
 static int l_setname(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   a->name_ = lua_tostring(L, 2);
   return 0;
 }
@@ -94,6 +81,12 @@ static int l_setname(lua_State* L)
 static int l_getname(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   lua_pushstring(L, a->name_.c_str());
   return 1;
 }
@@ -101,6 +94,12 @@ static int l_getname(lua_State* L)
 static int l_settype(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   a->type_ = lua_tostring(L, 2);
   return 0;
 }
@@ -108,6 +107,12 @@ static int l_settype(lua_State* L)
 static int l_gettype(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   lua_pushstring(L, a->type_.c_str());
   return 1;
 }
@@ -115,18 +120,27 @@ static int l_gettype(lua_State* L)
 static int l_setpos(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   Matrix::Ptr p = MatrixInterface::as(L, 2);
 
-  if (a && p)
-  {
-    a->pos_ = p;
-  }
+  a->pos_ = p;
   return 0;
 }
 
 static int l_getpos(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
+
   luaT_push(L, a->pos_);
   return 1;
 }
@@ -134,6 +148,11 @@ static int l_getpos(lua_State* L)
 static int l_tostring(lua_State* L)
 {
   Atom::Ptr a = luaT_to<Atom>(L, 1);
+
+  if (!a)
+  {
+    return luaL_argerror(L, 1, "Atom Expected");
+  }
 
   lua_getglobal(L, "tostring");
   luaT_push(L, a->pos_);
