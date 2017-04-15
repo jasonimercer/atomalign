@@ -13,6 +13,7 @@
  */
 
 #include "matrix.h"
+#include <dlib/matrix/matrix_math_functions.h>
 #include <math.h>
 
 namespace Matrix
@@ -56,17 +57,78 @@ void makeRotationZ(Type& R, double theta)
 
 double sumOfSquares(const Type& M)
 {
-  double sum = 0;
+  return dlib::sum(dlib::pointwise_multiply(M, M));
+}
 
-  for (int i = 0; i < M.nr(); i++)
+bool computeMean(const std::vector<Ptr>& src, Ptr u)
+{
+  double n = 0;
+
+  if (src.empty())
   {
-    for (int j = 0; j < M.nc(); j++)
+    return false;
+  }
+
+  (*u) = 0.0 * (*src[0]);
+
+  for (size_t i = 0; i < src.size(); i++)
+  {
+    *u += *src[i];
+    n++;
+  }
+
+  (*u) /= n;
+  return true;
+}
+
+static double covE(const std::vector<Ptr>& src, Matrix::Ptr mean, int i, int j)
+{
+  double n = 0;
+  double e = 0;
+
+  if (src.empty())
+  {
+    return 0.0;
+  }
+
+  for (size_t k = 0; k < src.size(); k++)
+  {
+    e += ((*src[k])(i, 0) - (*mean)(i, 0)) *
+         ((*src[k])(j, 0) - (*mean)(j, 0));
+    n++;
+  }
+
+  if (n > 1)
+  {
+    n--;
+  }
+
+  return e / n;
+}
+
+bool computeCovariance(const std::vector<Ptr>& src, Ptr S)
+{
+  Matrix::Ptr mean(new Matrix::Type(1, 1));
+
+  if (!S || !computeMean(src, mean))
+  {
+    return false;
+  }
+
+  const int n = mean->nr();
+
+  S->set_size(n, n);
+  (*S) *= 0.0;
+
+  for (int i = 0; i < n; i++)
+  {
+    for (int j = 0; j < n; j++)
     {
-      sum += M(i, j) * M(i, j);
+      (*S)(i, j) = covE(src, mean, i, j);
     }
   }
 
-  return sum;
+  return true;
 }
 
 }  // namespace Matrix

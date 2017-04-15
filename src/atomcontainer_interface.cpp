@@ -318,6 +318,33 @@ static int l_closest_dist_squared(lua_State* L)
   return 1;
 }
 
+static int l_displacements(lua_State* L)
+{
+  AtomContainer::Ptr ac1 = luaT_to<AtomContainer>(L, 1);
+  AtomContainer::Ptr ac2 = luaT_to<AtomContainer>(L, 2);
+
+  if (!ac1 || !ac2)
+  {
+    return 0;
+  }
+
+  std::vector<Matrix::Ptr> v;
+
+  AtomContainer::displacements(*ac1, *ac2, v);
+
+  lua_newtable(L);
+
+  for (size_t i = 0; i < v.size(); i++)
+  {
+    lua_pushinteger(L, i + 1);
+    luaT_push(L, v[i]);
+    lua_settable(L, -3);
+  }
+
+  return 1;
+}
+
+
 static int l_align(lua_State* L)
 {
   AtomContainer::Ptr ac1 = luaT_to<AtomContainer>(L, 1);
@@ -438,6 +465,8 @@ std::vector<luaL_Reg> AtomContainerInterface::luaMethods()
   methods.push_back(luaL_toreg("intersect", l_intersect));
   methods.push_back(luaL_toreg("intersected", l_intersected));
 
+  methods.push_back(luaL_toreg("displacements", l_displacements));
+
   methods.push_back(luaL_toreg("__tostring", l_tostring));
 
   return methods;
@@ -450,6 +479,7 @@ std::vector<luaL_Reg> AtomContainerInterface::luaFunctions()
   std::vector<luaL_Reg> functions;
 
   functions.push_back(luaL_toreg("closestDistanceSquared", l_closest_dist_squared));
+  functions.push_back(luaL_toreg("displacements", l_displacements));
   functions.push_back(luaL_toreg("align", l_align));
 
   return functions;

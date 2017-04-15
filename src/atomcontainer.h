@@ -3,6 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "atom.h"
+#include "matrix.h"
 #include <string>
 #include <vector>
 
@@ -95,6 +96,18 @@ public:
                       double& rx, double& ry, double& rz,
                       double rho_begin, double rho_end,
                       int steps);
+
+  /**
+   * @brief Get the displacement vectors between elements in a and the nearest element in b
+   * @param[in] a Source container A
+   * @param[in] b Source container B
+   * @param[out] v Displacement vectors
+   * @return mean displacement matrix
+   */
+  static void displacements(const AtomContainer& a,
+                            const AtomContainer& b,
+                            std::vector<Matrix::Ptr>& v);
+
 };
 
 #endif // ATOMCONTAINER_H

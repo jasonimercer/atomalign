@@ -14,6 +14,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <dlib/matrix.h>
+#include <vector>
 
 #ifndef MATRIX_H
 #define MATRIX_H
@@ -28,6 +29,22 @@ namespace Matrix
   void makeRotationZ(Type& R, double theta);
 
   double sumOfSquares(const Type& M);
+
+  /**
+   * @brief Compute the mean of a source vector
+   * @param src vector
+   * @param u mean
+   * @return true if mean was computed
+   */
+  bool computeMean(const std::vector<Ptr>& src, Ptr u);
+
+  /**
+   * @brief Compute the covariance of the source vector
+   * @param src vector
+   * @param u mean
+   * @return true if covariance was computed
+   */
+  bool computeCovariance(const std::vector<Ptr>& src, Ptr S);
 }  // namespace Matrix
 
 #endif  // MATRIX_H

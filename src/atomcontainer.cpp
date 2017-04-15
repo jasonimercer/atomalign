@@ -1,6 +1,6 @@
 #include "atomcontainer.h"
 #include "matrix.h"
-#include <dlib/optimization.h>
+#include <dlib/optimization/find_optimal_parameters.h>
 #include <math.h>
 #include <algorithm>
 #include <boost/function.hpp>
@@ -137,13 +137,13 @@ double AtomContainer::closestDistanceSquared(const AtomContainer& a, const AtomC
 
   for (size_t i = 0; i < a.atoms_.size(); i++)
   {
-    double closest = 1e40;
-    for (size_t j = 0; j < b.atoms_.size(); j++)
+    size_t j;
+    double dist_ij;
+
+    if (b.near(a.atoms_[i]->pos_, j, dist_ij))
     {
-      const double dist2_ij = Matrix::sumOfSquares(*a.atoms_[i]->pos_ - *b.atoms_[j]->pos_);
-      closest = std::min<double>(closest, dist2_ij);
+      sum += dist_ij;
     }
-    sum += closest;
   }
 
   return sum;
@@ -159,10 +159,11 @@ static double objective_function(AtomContainer::Ptr a,
 
   c->transform(X(0), X(1), X(2), X(3), X(4), X(5));
 
-  return
-      // checking both ways:
-      AtomContainer::closestDistanceSquared(*b, *c) +
-      AtomContainer::closestDistanceSquared(*c, *b);
+  // checking both ways:
+  const double bc = AtomContainer::closestDistanceSquared(*b, *c);
+  const double cb = AtomContainer::closestDistanceSquared(*c, *b);
+
+  return bc + cb;
 }
 
 double AtomContainer::align(AtomContainer::Ptr a, AtomContainer::Ptr b,
@@ -170,7 +171,6 @@ double AtomContainer::align(AtomContainer::Ptr a, AtomContainer::Ptr b,
                             double& rx, double& ry, double& rz,
                             double rho_begin, double rho_end, int steps)
 {
-
   column_vector X(6);
   X(0) = dx;
   X(1) = dy;
@@ -179,22 +179,18 @@ double AtomContainer::align(AtomContainer::Ptr a, AtomContainer::Ptr b,
   X(4) = ry;
   X(5) = rz;
 
-  const int n = 6;
-  const int i = (n + 1) * (n + 2) / 2;
-
   boost::function<double (const column_vector&)> f = boost::bind(objective_function, a, b, _1);
 
   try
   {
-    dlib::find_min_bobyqa(f,
-                          X,
-                          i,    // number of interpolation points
-                          dlib::uniform_matrix<double>(6, 1, -1e10),  // lower bound constraint
-                          dlib::uniform_matrix<double>(6, 1, 1e10),   // upper bound constraint
-                          rho_begin,  // initial trust region radius
-                          rho_end,  // stopping trust region radius
-                          steps  // max number of objective function evaluations
-                          );
+    dlib::find_optimal_parameters(
+          rho_begin,
+          rho_end,
+          steps,  // max number of objective function evaluations
+          X,
+          dlib::uniform_matrix<double>(6, 1, -1e10),  // lower bound constraint
+          dlib::uniform_matrix<double>(6, 1, 1e10),  // upper bound constraint
+          f);
   }
   catch(dlib::bobyqa_failure ex)
   {
@@ -209,4 +205,24 @@ double AtomContainer::align(AtomContainer::Ptr a, AtomContainer::Ptr b,
   ry = X(4);
   rz = X(5);
   return f(X);
+}
+
+void AtomContainer::displacements(const AtomContainer& a,
+                                  const AtomContainer& b,
+                                  std::vector<Matrix::Ptr>& v)
+{
+  size_t j;
+  double dist2;
+
+  for (size_t i = 0; i < a.atoms_.size(); i++)
+  {
+    if (b.near(a.atoms_[i]->pos_, j, dist2))
+    {
+      Matrix::Ptr displacement = Matrix::Ptr(new Matrix::Type(1, 1));
+
+      (*displacement) = (*(b.atoms_[j]->pos_)) - (*(a.atoms_[i]->pos_));
+
+      v.push_back(displacement);
+    }
+  }
 }

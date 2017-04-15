@@ -337,9 +337,9 @@ static int l_div(lua_State* L)
 static int l_tostring(lua_State* L)
 {
   Matrix::Ptr m = luaT_to<Matrix::Type>(L, 1);
+  lua_getglobal(L, "tostring");
 
   std::string s = "Matrix({";
-  char buf[20];
 
   for (int r = 0; r < m->nr(); r++)
   {
@@ -355,8 +355,13 @@ static int l_tostring(lua_State* L)
       {
         s += ", ";
       }
-      snprintf(buf, 20, "%f", (*m)(r, c));
-      s += buf;
+
+      lua_pushvalue(L, -1);
+      lua_pushnumber(L, (*m)(r, c));
+      lua_call(L, 1, 1);
+
+      s += lua_tostring(L, -1);
+      lua_pop(L, 1);
     }
     s += "}";
   }
@@ -481,6 +486,74 @@ static int l_makeident(lua_State* L)
   return 1;
 }
 
+static int l_mean(lua_State* L)
+{
+  std::vector<Matrix::Ptr> X;
+
+  for (int i = 1; i <= lua_gettop(L); i++)
+  {
+    if (lua_istable(L, i))
+    {
+      lua_pushnil(L);
+
+      while (lua_next(L, i))
+      {
+        Matrix::Ptr x = MatrixInterface::as(L, -1);
+
+        if (x)
+        {
+          X.push_back(x);
+        }
+        lua_pop(L, 1);
+      }
+    }
+  }
+
+  Matrix::Ptr u(new Matrix::Type(1, 1));
+
+  if (Matrix::computeMean(X, u))
+  {
+    luaT_push<Matrix::Type>(L, u);
+    return 1;
+  }
+
+  return 0;
+}
+
+static int l_cov(lua_State* L)
+{
+  std::vector<Matrix::Ptr> X;
+
+  for (int i = 1; i <= lua_gettop(L); i++)
+  {
+    if (lua_istable(L, i))
+    {
+      lua_pushnil(L);
+
+      while (lua_next(L, i))
+      {
+        Matrix::Ptr x = MatrixInterface::as(L, -1);
+
+        if (x)
+        {
+          X.push_back(x);
+        }
+        lua_pop(L, 1);
+      }
+    }
+  }
+
+  Matrix::Ptr S(new Matrix::Type(1, 1));
+
+  if (Matrix::computeCovariance(X, S))
+  {
+    luaT_push<Matrix::Type>(L, S);
+    return 1;
+  }
+
+  return 0;
+}
+
 std::vector<luaL_Reg> MatrixInterface::luaFunctions()
 {
   std::vector<luaL_Reg> functions;
@@ -488,9 +561,8 @@ std::vector<luaL_Reg> MatrixInterface::luaFunctions()
   functions.push_back(luaL_toreg("makeRotationY", l_makeroty));
   functions.push_back(luaL_toreg("makeRotationZ", l_makerotz));
   functions.push_back(luaL_toreg("makeIdentity", l_makeident));
+  functions.push_back(luaL_toreg("mean", l_mean));
+  functions.push_back(luaL_toreg("covariance", l_cov));
 
   return functions;
 }
-
-
-
