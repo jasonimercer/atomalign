@@ -32,40 +32,74 @@ Consider the following script (available in examples/matrix.lua)
 A = Matrix({{1, 0, 2}, {2, 3, 0}, {1, 1, 1}})
 b = Matrix({{4, 10, 1}}):tr()
 
-B = A:reshaped(1, 9)
-
-print("A Matrix")
+print("A")
 print(A)
 
-print("B Matrix (A reshaped to a single row)")
+B = A:reshaped(1, 9):tr()
+print("B = A:reshaped(1, 9):tr()")
 print(B)
 
-print("b Matrix")
+print("b")
 print(b)
 
-print("Solving for A x = b")
-x = A / b
+x = b / A
 
-print("x:")
+print("x = b / A")
 print(x)
 
-print("A x - b:")
+print("A * x - b")
 print(A * x - b)
+
+print("I = A:inv() * A")
+I = A:inv() * A
+print(I)
+
+A = Matrix({{3, 2, 2}, {2, 3, -2}}):tr()
+U, S, VT = A:svd()
+
+print("A")
+print(A)
+
+print("U, S, VT = A:svd()")
+
+print("U")
+print(U)
+
+print("S")
+print(S)
+
+print("VT")
+print(VT)
+
+print("U * S * VT:tr()")
+print(U * S * VT:tr())
 ```
 
 This can be run from the build directory:
 
 ```
 ./atom_align  ../examples/matrix.lua
-A Matrix
-Matrix({{1.000000, 0.000000, 2.000000}, {2.000000, 3.000000, 0.000000}, {1.000000, 1.000000, 1.000000}})
-B Matrix (A reshaped to a single row)
-Matrix({{1.000000, 0.000000, 2.000000, 2.000000, 3.000000, 0.000000, 1.000000, 1.000000, 1.000000}})
-b Matrix
-Matrix({{4.000000}, {10.000000}, {1.000000}})
-Solving for A x = b
-x:
-Matrix({{26.000000}, {-14.000000}, {-11.000000}})
-A x - b:
-Matrix({{0.000000}, {0.000000}, {0.000000}})
+A
+Matrix({{1.0, 0.0, 2.0}, {2.0, 3.0, 0.0}, {1.0, 1.0, 1.0}})
+B = A:reshaped(1, 9):tr()
+Matrix({{1.0}, {0.0}, {2.0}, {2.0}, {3.0}, {0.0}, {1.0}, {1.0}, {1.0}})
+b
+Matrix({{4.0}, {10.0}, {1.0}})
+x = b / A
+Matrix({{26.0}, {-14.0}, {-11.0}})
+A * x - b
+Matrix({{0.0}, {0.0}, {0.0}})
+I = A:inv() * A
+Matrix({{1.0, 8.8817841970013e-16, 8.8817841970013e-16}, {-4.4408920985006e-16, 1.0, -4.4408920985006e-16}, {-4.4408920985006e-16, -4.4408920985006e-16, 1.0}})
+A
+Matrix({{3.0, 2.0}, {2.0, 3.0}, {2.0, -2.0}})
+U, S, VT = A:svd()
+U
+Matrix({{-0.70710678118655, 0.23570226039552}, {-0.70710678118655, -0.23570226039552}, {-1.6653345369377e-16, 0.94280904158206}})
+S
+Matrix({{5.0, 0.0}, {0.0, 3.0}})
+VT
+Matrix({{-0.70710678118655, 0.70710678118655}, {-0.70710678118655, -0.70710678118655}})
+U * S * VT:tr()
+Matrix({{3.0, 2.0}, {2.0, 3.0}, {2.0, -2.0}})
 ```
