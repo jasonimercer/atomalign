@@ -45,6 +45,13 @@ namespace Matrix
    * @return true if covariance was computed
    */
   bool computeCovariance(const std::vector<Ptr>& src, Ptr S);
+
+  /**
+   * @brief Create a pointer to a copy of the given matrix
+   * @param A src matrix
+   * @return copy of matrix
+   */
+  Ptr copy(Ptr A);
 }  // namespace Matrix
 
 #endif  // MATRIX_H

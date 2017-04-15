@@ -131,4 +131,15 @@ bool computeCovariance(const std::vector<Ptr>& src, Ptr S)
   return true;
 }
 
+Ptr copy(Ptr A)
+{
+  if (!A)
+  {
+    return Matrix::Ptr();
+  }
+
+  Matrix::Ptr B(new Matrix::Type(*A));
+  return B;
+}
+
 }  // namespace Matrix

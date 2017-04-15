@@ -3,8 +3,8 @@ project(AtomAlign)
 
 # cmake --build . --config RelWithDebInfo
 
-set(CMAKE_CXX_FLAGS "--std=c++11 -g -O2 ${CMAKE_CXX_FLAGS}")
-set(CMAKE_C_FLAGS "-g -O2 ${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "--std=c++11 -g -O2 -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "-g -O2 -Wall ${CMAKE_C_FLAGS}")
 
 include_directories(${PROJECT_SOURCE_DIR}/lua-5.3.4/src)
 include_directories(${PROJECT_SOURCE_DIR}/dlib-19.4)

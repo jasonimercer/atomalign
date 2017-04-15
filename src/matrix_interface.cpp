@@ -122,9 +122,14 @@ static int l_add(lua_State* L)
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
   Matrix::Ptr B = luaT_to<Matrix::Type>(L, 2);
 
-  if (!A || !B)
+  if (!A)
   {
-    return 0;
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
+  if (!B)
+  {
+    return luaL_argerror(L, 2, "Matrix Expected");
   }
 
   if (!sameSize(A, B))
@@ -145,9 +150,14 @@ static int l_sub(lua_State* L)
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
   Matrix::Ptr B = luaT_to<Matrix::Type>(L, 2);
 
-  if (!A || !B)
+  if (!A)
   {
-    return 0;
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
+  if (!B)
+  {
+    return luaL_argerror(L, 2, "Matrix Expected");
   }
 
   if (!sameSize(A, B))
@@ -167,6 +177,11 @@ static int l_trans(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
 
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
   Matrix::Ptr B(new Matrix::Type);
 
   *B = dlib::trans(*A);
@@ -179,6 +194,11 @@ static int l_inv(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
 
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
   Matrix::Ptr B(new Matrix::Type);
 
   *B = dlib::inv(*A);
@@ -190,6 +210,12 @@ static int l_inv(lua_State* L)
 static int l_det(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
   lua_pushnumber(L, dlib::det(*A));
   return 1;
 }
@@ -198,6 +224,11 @@ static int l_unm(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
   Matrix::Ptr B(new Matrix::Type);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
 
   *B = (*A) * -1.0;
 
@@ -208,6 +239,11 @@ static int l_unm(lua_State* L)
 static int l_reshape(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
 
   int new_rows = lua_tointeger(L, 2);
   int new_cols = lua_tointeger(L, 3);
@@ -220,14 +256,51 @@ static int l_reshape(lua_State* L)
 static int l_reshaped(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
-  Matrix::Ptr B(new Matrix::Type);
 
-  int new_rows = lua_tointeger(L, 2);
-  int new_cols = lua_tointeger(L, 3);
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
 
-  *B = dlib::reshape(*A, new_rows, new_cols);
+  luaT_push(L, Matrix::copy(A));
+  lua_replace(L, 1);
+  l_reshape(L);
 
-  luaT_push(L, B);
+  lua_settop(L, 1);  // remove all but the reshaped copy
+
+  return 1;
+}
+
+
+static int l_round(lua_State* L)
+{
+  Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
+  *A = dlib::round(*A);
+
+  return 0;
+}
+
+static int l_rounded(lua_State* L)
+{
+  Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
+  luaT_push(L, Matrix::copy(A));
+  lua_replace(L, 1);
+  l_round(L);
+
+  lua_settop(L, 1);  // remove all but the rounded copy
+
   return 1;
 }
 
@@ -235,15 +308,39 @@ static int l_svd(lua_State* L)
 {
   Matrix::Ptr M = luaT_to<Matrix::Type>(L, 1);
 
-  Matrix::Ptr A(new Matrix::Type);
-  Matrix::Ptr B(new Matrix::Type);
-  Matrix::Ptr C(new Matrix::Type);
+  if (!M)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
 
-  dlib::svd(*M, *A, *B, *C);
+  const int nr = M->nr();
+  const int nc = M->nc();
 
-  luaT_push(L, A);
-  luaT_push(L, B);
-  luaT_push(L, C);
+  Matrix::Ptr U(new Matrix::Type);
+  Matrix::Ptr S(new Matrix::Type);
+  Matrix::Ptr VT(new Matrix::Type);
+
+  dlib::svd(*M, *U, *S, *VT);
+
+  /*
+  - computes the singular value decomposition of m
+  - M == U * S * V^T
+  - U^T * U == identity matrix
+  - V^T * V == identity matrix
+  - diag(W) == the singular values of the matrix m in no
+    particular order.  All non-diagonal elements of S are
+    set to 0.
+  - U.nr() == M.nr()
+  - U.nc() == M.nc()
+  - S.nr() == M.nc()
+  - S.nc() == M.nc()
+  - V.nr() == M.nc()
+  - V.nc() == M.nc()
+  */
+
+  luaT_push(L, U);
+  luaT_push(L, S);
+  luaT_push(L, VT);
   return 3;
 }
 
@@ -253,7 +350,7 @@ static int l_mul(lua_State* L)
 
   if (!A)
   {
-    return 0;
+    return luaL_argerror(L, 1, "Matrix Expected");
   }
 
   if (luaT_is<Matrix::Type>(L, 2))
@@ -265,7 +362,7 @@ static int l_mul(lua_State* L)
       return luaL_error(L, "Size mismatch");
     }
 
-    Matrix::Ptr AB(new Matrix::Type());
+    Matrix::Ptr AB(new Matrix::Type);
 
     *AB = (*A) * (*B);
 
@@ -293,21 +390,21 @@ static int l_div(lua_State* L)
 
   if (!A)
   {
-    return 0;
+    return luaL_argerror(L, 1, "Matrix Expected");
   }
 
   if (luaT_is<Matrix::Type>(L, 2))
   {
     Matrix::Ptr B = luaT_to<Matrix::Type>(L, 2);
 
-    if (A->nc() != B->nr())
+    if (B->nc() != A->nr())
     {
       return luaL_error(L, "Size mismatch");
     }
 
-    Matrix::Ptr AB(new Matrix::Type());
+    Matrix::Ptr AB(new Matrix::Type);
 
-    *AB = dlib::inv(*A) * (*B);
+    *AB = dlib::inv(*B) * (*A);
 
     luaT_push(L, AB);
     return 1;
@@ -337,6 +434,12 @@ static int l_div(lua_State* L)
 static int l_tostring(lua_State* L)
 {
   Matrix::Ptr m = luaT_to<Matrix::Type>(L, 1);
+
+  if (!m)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
   lua_getglobal(L, "tostring");
 
   std::string s = "Matrix({";
@@ -375,6 +478,11 @@ static int l_set(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
 
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
+
   int r = lua_tointeger(L, 2) - 1;
   int c = lua_tointeger(L, 3) - 1;
   double x = lua_tonumber(L, 4);
@@ -396,6 +504,11 @@ static int l_set(lua_State* L)
 static int l_get(lua_State* L)
 {
   Matrix::Ptr A = luaT_to<Matrix::Type>(L, 1);
+
+  if (!A)
+  {
+    return luaL_argerror(L, 1, "Matrix Expected");
+  }
 
   int r = lua_tointeger(L, 2) - 1;
   int c = 0;
@@ -428,6 +541,10 @@ std::vector<luaL_Reg> MatrixInterface::luaMethods()
   methods.push_back(luaL_toreg("svd", l_svd));
   methods.push_back(luaL_toreg("reshape", l_reshape));
   methods.push_back(luaL_toreg("reshaped", l_reshaped));
+
+  methods.push_back(luaL_toreg("round", l_round));
+  methods.push_back(luaL_toreg("rounded", l_rounded));
+
   methods.push_back(luaL_toreg("__tostring", l_tostring));
   methods.push_back(luaL_toreg("__mul", l_mul));
   methods.push_back(luaL_toreg("__div", l_div));
@@ -444,7 +561,7 @@ std::vector<luaL_Reg> MatrixInterface::luaMethods()
 static int l_makerotx(lua_State* L)
 {
   double theta = lua_tonumber(L, 1);
-  Matrix::Ptr m(new Matrix::Type());
+  Matrix::Ptr m(new Matrix::Type);
   Matrix::makeRotationX(*m, theta);
   luaT_push(L, m);
   return 1;
@@ -453,7 +570,7 @@ static int l_makerotx(lua_State* L)
 static int l_makeroty(lua_State* L)
 {
   double theta = lua_tonumber(L, 1);
-  Matrix::Ptr m(new Matrix::Type());
+  Matrix::Ptr m(new Matrix::Type);
   Matrix::makeRotationY(*m, theta);
   luaT_push(L, m);
   return 1;
@@ -462,7 +579,7 @@ static int l_makeroty(lua_State* L)
 static int l_makerotz(lua_State* L)
 {
   double theta = lua_tonumber(L, 1);
-  Matrix::Ptr m(new Matrix::Type());
+  Matrix::Ptr m(new Matrix::Type);
   Matrix::makeRotationZ(*m, theta);
   luaT_push(L, m);
   return 1;
@@ -479,7 +596,7 @@ static int l_makeident(lua_State* L)
   {
     n = 1;
   }
-  Matrix::Ptr m(new Matrix::Type());
+  Matrix::Ptr m(new Matrix::Type);
   *m = dlib::identity_matrix<double,long>(n);
 
   luaT_push(L, m);
@@ -509,7 +626,7 @@ static int l_mean(lua_State* L)
     }
   }
 
-  Matrix::Ptr u(new Matrix::Type(1, 1));
+  Matrix::Ptr u(new Matrix::Type);
 
   if (Matrix::computeMean(X, u))
   {
@@ -543,7 +660,7 @@ static int l_cov(lua_State* L)
     }
   }
 
-  Matrix::Ptr S(new Matrix::Type(1, 1));
+  Matrix::Ptr S(new Matrix::Type);
 
   if (Matrix::computeCovariance(X, S))
   {
