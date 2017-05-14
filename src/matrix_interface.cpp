@@ -313,9 +313,6 @@ static int l_svd(lua_State* L)
     return luaL_argerror(L, 1, "Matrix Expected");
   }
 
-  const int nr = M->nr();
-  const int nc = M->nc();
-
   Matrix::Ptr U(new Matrix::Type);
   Matrix::Ptr S(new Matrix::Type);
   Matrix::Ptr VT(new Matrix::Type);

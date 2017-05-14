@@ -25,6 +25,12 @@ file(GLOB ALIGN_HDR_FILES ${PROJECT_SOURCE_DIR}/src/*.h)
 set(FAKE interactive_code.h)
 
 add_custom_command(
+  OUTPUT load_mol2.h
+  DEPENDS ${PROJECT_BINARY_DIR}/embedfile ${PROJECT_SOURCE_DIR}/src/load_mol2.lua
+  COMMAND ${PROJECT_BINARY_DIR}/embedfile ${PROJECT_SOURCE_DIR}/src/load_mol2.lua ${PROJECT_BINARY_DIR}/load_mol2.h load_mol2
+  COMMENT "Embedding load_mol2.lua")
+
+add_custom_command(
   OUTPUT interactive_code.h
   DEPENDS ${PROJECT_BINARY_DIR}/embedfile ${PROJECT_SOURCE_DIR}/src/interactive.lua
   COMMAND ${PROJECT_BINARY_DIR}/embedfile ${PROJECT_SOURCE_DIR}/src/interactive.lua ${PROJECT_BINARY_DIR}/interactive_code.h interactive_code
@@ -32,6 +38,7 @@ add_custom_command(
 
 add_executable(atom_align
                     ${PROJECT_BINARY_DIR}/interactive_code.h
+                    ${PROJECT_BINARY_DIR}/load_mol2.h
                     ${ALIGN_SRC_FILES}
                     ${ALIGN_HDR_FILES}
                     interactive_code.h)

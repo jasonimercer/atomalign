@@ -18,6 +18,7 @@
 #include "matrix_interface.h"
 #include "matrix_interface.h"
 #include "interactive.h"
+#include "load_mol2.h"
 #include <stdio.h>
 
 int main(int argc, char** argv)
@@ -30,6 +31,11 @@ int main(int argc, char** argv)
   LuaInterface::luaT_register<AtomContainer>(L);
 
   register_interactive(L);
+
+  if (LuaInterface::luaL_dostringn(L, load_mol2, "load_mol2.lua"))
+  {
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
+  }
 
   if (argc > 1)
   {
