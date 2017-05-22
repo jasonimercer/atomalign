@@ -668,6 +668,24 @@ static int l_cov(lua_State* L)
   return 0;
 }
 
+static int l_eigen(lua_State* L)
+{
+  Matrix::Ptr m = luaT_to<Matrix::Type>(L, 1);
+
+  dlib::eigenvalue_decomposition<Matrix::Type> eigen_system(*m);
+
+  Matrix::Ptr V(new Matrix::Type);
+  Matrix::Ptr D(new Matrix::Type);
+
+  *V = eigen_system.get_pseudo_v();
+  *D = eigen_system.get_pseudo_d();
+
+  luaT_push(L, V);
+  luaT_push(L, D);
+
+  return 2;
+}
+
 std::vector<luaL_Reg> MatrixInterface::luaFunctions()
 {
   std::vector<luaL_Reg> functions;
@@ -677,6 +695,7 @@ std::vector<luaL_Reg> MatrixInterface::luaFunctions()
   functions.push_back(luaL_toreg("makeIdentity", l_makeident));
   functions.push_back(luaL_toreg("mean", l_mean));
   functions.push_back(luaL_toreg("covariance", l_cov));
+  functions.push_back(luaL_toreg("eigenSystem", l_eigen));
 
   return functions;
 }
